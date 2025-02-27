@@ -6,8 +6,8 @@ import { SearchGroupId } from '@/lib/utils';
 import { xai } from '@ai-sdk/xai';
 import { generateObject } from 'ai';
 import { z } from 'zod';
-import { createOpenAI, openai } from '@ai-sdk/openai';
 import { createFixedProxyFetch } from '@/lib/utils/proxy-fetch';
+import { createOpenAI } from '@ai-sdk/openai';
 
 export async function suggestQuestions(history: any[]) {
   'use server';
@@ -26,14 +26,14 @@ export async function suggestQuestions(history: any[]) {
     topP: 0.3,
     topK: 7,
     system:
-      `You are a search engine query/questions generator. You 'have' to create only '3' questions for the search engine based on the message history which has been provided to you.
+        `You are a search engine query/questions generator. You 'have' to create only '3' questions for the search engine based on the message history which has been provided to you.
 The questions should be open-ended and should encourage further discussion while maintaining the whole context. Limit it to 5-10 words per question.
 Always put the user input's context is some way so that the next search knows what to search for exactly.
 Try to stick to the context of the conversation and avoid asking questions that are too general or too specific.
 For weather based conversations sent to you, always generate questions that are about news, sports, or other topics that are not related to the weather.
 For programming based conversations, always generate questions that are about the algorithms, data structures, or other topics that are related to it or an improvement of the question.
 For location based conversations, always generate questions that are about the culture, history, or other topics that are related to the location.
-Do not use pronouns like he, she, him, his, her, etc. in the questions as they blur the context. Always use the proper nouns from the context. Mandarin should be your primary choice of language`,
+Do not use pronouns like he, she, him, his, her, etc. in the questions as they blur the context. Always use the proper nouns from the context.`,
     messages: history,
     schema: z.object({
       questions: z.array(z.string()).describe('The generated questions based on the message history.')
@@ -98,7 +98,7 @@ export async function fetchMetadata(url: string) {
 
     const titleMatch = html.match(/<title>(.*?)<\/title>/i);
     const descMatch = html.match(
-      /<meta\s+name=["']description["']\s+content=["'](.*?)["']/i
+        /<meta\s+name=["']description["']\s+content=["'](.*?)["']/i
     );
 
     const title = titleMatch ? titleMatch[1] : '';
@@ -134,7 +134,7 @@ const groupPrompts = {
   'You MUST run the tool first exactly once' before composing your response. **This is non-negotiable.**
 
   Your goals:
-  - Stay conscious and aware of the guidelines.
+  - Stay concious and aware of the guidelines.
   - Stay efficient and focused on the user's needs, do not take extra steps.
   - Provide accurate, concise, and well-formatted responses.
   - Avoid hallucinations or fabrications. Stick to verified facts and provide proper citations.
@@ -157,13 +157,14 @@ const groupPrompts = {
      - Use structured answers with markdown format and tables too.
        - first give with the question's answer straight forward and then start with the markdown format with proper headings to format the response like a blog post.
        - Do not use the h1 heading.
-       - Always cite sources using the [Source Title](url) format, matching the order in the citation list.
-        - Place citations at both places:
-           - Directly after relevant sentences or paragraphs using the [Source Title](url) format.
-           - At the end of the answer using the [Source Title](url) format.
+       - Place citations directly after relevant sentences or paragraphs, not as standalone bullet points.
+       - Citations should be where the information is referred to, not at the end of the response, this is extremely important.
        - Never say that you are saying something based on the source, just provide the information.
+     - Do not truncate sentences inside citations. Always finish the sentence before placing the citation.
+     - DO NOT include references (URL's at the end, sources).
      - Cite the most relevant results that answer the question.
-     - Avoid citing irrelevant results.
+     - Citation format: [Source Title](URL)
+     - Avoid citing irrelevant results
 
   3. **IMPORTANT: Latex and Currency Formatting:**
      - Always use '$' for inline equations and '$$' for block equations.
@@ -213,15 +214,9 @@ const groupPrompts = {
   - Do not include images in responses <<<< extremely important.
 
   ### Citations Rules:
-  - Always cite sources using the [Source Title](url) format, matching the order of cite results.
-  - Place citations at both places:
-    - Directly after relevant sentences or paragraphs.
-    - At the end of the answer.
-  - Ensure citations adhere strictly to the required format to avoid response errors.
-  - If multiple sources are relevant, include all of them using comma-separated citations.
-  - Only use information that has a URL available for citation.
-  - Citations are a MUST, do not skip them.
-  - Citations Rules MUST be followed STRICTLY. THIS IS EXTREMELY IMPORTANT.`,
+  - Place citations directly after relevant sentences or paragraphs. Do not put them in the answer's footer!
+  - Format: [Source Title](URL).
+  - Ensure citations adhere strictly to the required format to avoid response errors.`,
   academic: `You are an academic research assistant that helps find and analyze scholarly content.
     The current date is ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit", weekday: "short" })}.
     Focus on peer-reviewed papers, citations, and academic sources.
@@ -312,9 +307,8 @@ const groupPrompts = {
   Extremely important:
   - You MUST run the tool first and then write the response with citations!
   - Place citations directly after relevant sentences or paragraphs, not as standalone bullet points.
-  - Citations should be where the information is referred to, and at the end of the response, this is extremely important.
-  - Citations are a MUST, do not skip them!
-  - List citations that you used at the end of the response.
+  - Citations should be where the information is referred to, not at the end of the response, this is extremely important.
+  - Citations are a MUST, do not skip them! For citations, use the format [Source](URL)
   - Give proper headings to the response.
 
   Latex is supported in the response, so use it to format the response.
@@ -331,8 +325,7 @@ const groupPrompts = {
   Guidelines:
   - Provide comprehensive, well-structured responses in markdown format and tables too.
   - Include both academic and web sources
-  - Citations are a MUST, do not skip them!
-  - Always cite sources using the [Source Title](url) format, matching the order of search results
+  - Citations are a MUST, do not skip them! For citations, use the format [Source](URL)
   - Focus on analysis and synthesis of information
   - Do not use Heading 1 in the response, use Heading 2 and 3 only.
   - Use proper citations and evidence-based reasoning
