@@ -3,7 +3,6 @@
 
 import { serverEnv } from '@/env/server';
 import { SearchGroupId } from '@/lib/utils';
-import { xai } from '@ai-sdk/xai';
 import { generateObject } from 'ai';
 import { z } from 'zod';
 import { createFixedProxyFetch } from '@/lib/utils/proxy-fetch';
