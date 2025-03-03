@@ -1375,17 +1375,17 @@ export async function POST(req: Request) {
                             try {
                                 // Get current date and time
                                 const now = new Date();
-                                
+
                                 // Use geolocation to determine timezone
                                 let userTimezone = 'UTC'; // Default to UTC
-                                
+
                                 if (geo && geo.latitude && geo.longitude) {
                                     try {
                                         // Get timezone from coordinates using Google Maps API
                                         const tzResponse = await fetch(
                                             `https://maps.googleapis.com/maps/api/timezone/json?location=${geo.latitude},${geo.longitude}&timestamp=${Math.floor(now.getTime() / 1000)}&key=${serverEnv.GOOGLE_MAPS_API_KEY}`
                                         );
-                                        
+
                                         if (tzResponse.ok) {
                                             const tzData = await tzResponse.json();
                                             if (tzData.status === 'OK' && tzData.timeZoneId) {
@@ -1403,7 +1403,7 @@ export async function POST(req: Request) {
                                 } else {
                                     console.log('No geolocation data available, using UTC');
                                 }
-                                
+
                                 // Format date and time using the timezone
                                 return {
                                     timestamp: now.getTime(),
