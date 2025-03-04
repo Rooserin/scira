@@ -42,7 +42,7 @@ const vol = createOpenAI({
 
 const scira = customProvider({
     languageModels: {
-        'scira-default': openai('gpt-4o-mini'),
+        'scira-default': openai('gpt-4o'),
         // 'scira-grok-vision': xai('grok-2-vision-1212'),
         'scira-llama': cerebras('llama-3.3-70b'),
         'scira-sonnet': anthropic('claude-3-7-sonnet-20250219'),
@@ -282,15 +282,13 @@ export async function POST(req: Request) {
                             amount: z.number().default(1).describe('The amount to convert.'),
                         }),
                         execute: async ({ from, to }: { from: string; to: string }) => {
-                            const code = `
-  import yfinance as yf
-  from_currency = '${from}'
-  to_currency = '${to}'
-  currency_pair = f'{from_currency}{to_currency}=X'
-  data = yf.Ticker(currency_pair).history(period='1d')
-  latest_rate = data['Close'].iloc[-1]
-  latest_rate
-  `;
+                            const code = `import yfinance as yf
+                                                from_currency = '${from}'
+                                                to_currency = '${to}'
+                                                currency_pair = f'{from_currency}{to_currency}=X'
+                                                data = yf.Ticker(currency_pair).history(period='1d')
+                                                latest_rate = data['Close'].iloc[-1]
+                                                latest_rate`;
                             console.log('Currency pair:', from, to);
 
                             const sandbox = await CodeInterpreter.create(serverEnv.SANDBOX_TEMPLATE_ID!);
