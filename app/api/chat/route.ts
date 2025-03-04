@@ -3,6 +3,7 @@ import { getGroupConfig } from '@/app/actions';
 import { serverEnv } from '@/env/server';
 import { createCerebras } from '@ai-sdk/cerebras';
 import { createAnthropic } from '@ai-sdk/anthropic';
+import { xai } from '@ai-sdk/xai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createGroq } from '@ai-sdk/groq';
 import { createOpenAI } from '@ai-sdk/openai';
@@ -18,7 +19,8 @@ import {
     createDataStreamResponse,
     extractReasoningMiddleware,
     customProvider,
-    generateObject
+    generateObject,
+    NoSuchToolError
 } from 'ai';
 import Exa from 'exa-js';
 import { z } from 'zod';
@@ -43,20 +45,21 @@ const vol = createOpenAI({
 const scira = customProvider({
     languageModels: {
         'scira-default': openai('gpt-4o'),
+        'scira-vision': xai('grok-2-vision-1212'),
         // 'scira-grok-vision': xai('grok-2-vision-1212'),
         'scira-llama': cerebras('llama-3.3-70b'),
         'scira-sonnet': anthropic('claude-3-7-sonnet-20250219'),
         'scira-r1': wrapLanguageModel({
             model: groq('deepseek-r1-distill-llama-70b'),
-            middleware: extractReasoningMiddleware({ tagName: 'think' }),
+            middleware: extractReasoningMiddleware({ tagName: 'think' })
         }),
         'scira-qwen': groq('deepseek-r1-distill-qwen-32b'),
         'ep-20250213135948-nmzhh': vol('ep-20250213135948-nmzhh'),
     },
 });
 
-// Allow streaming responses up to 120 seconds
-export const maxDuration = 300;
+// Allow streaming responses up to 600 seconds
+export const maxDuration = 600;
 
 interface XResult {
     id: string;
@@ -215,7 +218,7 @@ export async function POST(req: Request) {
                         description: 'Write and execute Python code to find stock data and generate a stock chart.',
                         parameters: z.object({
                             title: z.string().describe('The title of the chart.'),
-                            code: z.string().describe('The Python code to execute.'),
+                            code: z.string().describe('The Python code with matplotlib line chart and yfinance to execute.'),
                             icon: z
                                 .enum(['stock', 'date', 'calculation', 'default'])
                                 .describe('The icon to display for the chart.'),
@@ -728,16 +731,16 @@ export async function POST(req: Request) {
                         description: 'Search YouTube videos using Exa AI and get detailed video information.',
                         parameters: z.object({
                             query: z.string().describe('The search query for YouTube videos'),
-                            no_of_results: z.number().default(5).describe('The number of results to return'),
                         }),
-                        execute: async ({ query, no_of_results }: { query: string; no_of_results: number }) => {
+                        execute: async ({ query,  }: { query: string; }) => {
                             try {
                                 const exa = new Exa(serverEnv.EXA_API_KEY as string);
 
                                 // Simple search to get YouTube URLs only
                                 const searchResult = await exa.search(query, {
-                                    type: 'keyword',
-                                    numResults: no_of_results,
+                                    type: 'neural',
+                                    useAutoprompt: true,
+                                    numResults: 10,
                                     includeDomains: ['youtube.com'],
                                 });
 
@@ -829,7 +832,11 @@ export async function POST(req: Request) {
                             try {
                                 const content = await app.scrapeUrl(url);
                                 if (!content.success || !content.metadata) {
-                                    return { error: 'Failed to retrieve content' };
+                                    return {
+                                        results: [{
+                                            error: content.error
+                                        }]
+                                    };
                                 }
 
                                 // Define schema for extracting missing content
@@ -1078,275 +1085,275 @@ export async function POST(req: Request) {
                             };
                         },
                     }),
-                    // nearby_search: tool({
-                    //     description: 'Search for nearby places, such as restaurants or hotels based on the details given.',
-                    //     parameters: z.object({
-                    //         location: z.string().describe('The location name given by user.'),
-                    //         latitude: z.number().describe('The latitude of the location.'),
-                    //         longitude: z.number().describe('The longitude of the location.'),
-                    //         type: z
-                    //             .string()
-                    //             .describe('The type of place to search for (restaurants, hotels, attractions, geos).'),
-                    //         radius: z.number().default(6000).describe('The radius in meters (max 50000, default 6000).'),
-                    //     }),
-                    //     execute: async ({
-                    //         location,
-                    //         latitude,
-                    //         longitude,
-                    //         type,
-                    //         radius,
-                    //     }: {
-                    //         latitude: number;
-                    //         longitude: number;
-                    //         location: string;
-                    //         type: string;
-                    //         radius: number;
-                    //     }) => {
-                    //         const apiKey = serverEnv.TRIPADVISOR_API_KEY;
-                    //         let finalLat = latitude;
-                    //         let finalLng = longitude;
-                    //
-                    //         try {
-                    //             // Try geocoding first
-                    //             const geocodingData = await fetch(
-                    //                 `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
-                    //                     location,
-                    //                 )}&key=${serverEnv.GOOGLE_MAPS_API_KEY}`,
-                    //             );
-                    //
-                    //             const geocoding = await geocodingData.json();
-                    //
-                    //             if (geocoding.results?.[0]?.geometry?.location) {
-                    //                 let trimmedLat = geocoding.results[0].geometry.location.lat.toString().split('.');
-                    //                 finalLat = parseFloat(trimmedLat[0] + '.' + trimmedLat[1].slice(0, 6));
-                    //                 let trimmedLng = geocoding.results[0].geometry.location.lng.toString().split('.');
-                    //                 finalLng = parseFloat(trimmedLng[0] + '.' + trimmedLng[1].slice(0, 6));
-                    //                 console.log('Using geocoded coordinates:', finalLat, finalLng);
-                    //             } else {
-                    //                 console.log('Using provided coordinates:', finalLat, finalLng);
-                    //             }
-                    //
-                    //             // Get nearby places
-                    //             const nearbyResponse = await fetch(
-                    //                 `https://api.content.tripadvisor.com/api/v1/location/nearby_search?latLong=${finalLat},${finalLng}&category=${type}&radius=${radius}&language=en&key=${apiKey}`,
-                    //                 {
-                    //                     method: 'GET',
-                    //                     headers: {
-                    //                         Accept: 'application/json',
-                    //                         origin: 'https://mplx.local',
-                    //                         referer: 'https://mplx.local',
-                    //                     },
-                    //                 },
-                    //             );
-                    //
-                    //             if (!nearbyResponse.ok) {
-                    //                 throw new Error(`Nearby search failed: ${nearbyResponse.status}`);
-                    //             }
-                    //
-                    //             const nearbyData = await nearbyResponse.json();
-                    //
-                    //             if (!nearbyData.data || nearbyData.data.length === 0) {
-                    //                 console.log('No nearby places found');
-                    //                 return {
-                    //                     results: [],
-                    //                     center: { lat: finalLat, lng: finalLng },
-                    //                 };
-                    //             }
-                    //
-                    //             // Process each place
-                    //             const detailedPlaces = await Promise.all(
-                    //                 nearbyData.data.map(async (place: any) => {
-                    //                     try {
-                    //                         if (!place.location_id) {
-                    //                             console.log(`Skipping place "${place.name}": No location_id`);
-                    //                             return null;
-                    //                         }
-                    //
-                    //                         // Fetch place details
-                    //                         const detailsResponse = await fetch(
-                    //                             `https://api.content.tripadvisor.com/api/v1/location/${place.location_id}/details?language=en&currency=USD&key=${apiKey}`,
-                    //                             {
-                    //                                 method: 'GET',
-                    //                                 headers: {
-                    //                                     Accept: 'application/json',
-                    //                                     origin: 'https://mplx.local',
-                    //                                     referer: 'https://mplx.local',
-                    //                                 },
-                    //                             },
-                    //                         );
-                    //
-                    //                         if (!detailsResponse.ok) {
-                    //                             console.log(`Failed to fetch details for "${place.name}"`);
-                    //                             return null;
-                    //                         }
-                    //
-                    //                         const details = await detailsResponse.json();
-                    //
-                    //                         console.log(`Place details for "${place.name}":`, details);
-                    //
-                    //                         // Fetch place photos
-                    //                         let photos = [];
-                    //                         try {
-                    //                             const photosResponse = await fetch(
-                    //                                 `https://api.content.tripadvisor.com/api/v1/location/${place.location_id}/photos?language=en&key=${apiKey}`,
-                    //                                 {
-                    //                                     method: 'GET',
-                    //                                     headers: {
-                    //                                         Accept: 'application/json',
-                    //                                         origin: 'https://mplx.local',
-                    //                                         referer: 'https://mplx.local',
-                    //                                     },
-                    //                                 },
-                    //                             );
-                    //
-                    //                             if (photosResponse.ok) {
-                    //                                 const photosData = await photosResponse.json();
-                    //                                 photos =
-                    //                                     photosData.data
-                    //                                         ?.map((photo: any) => ({
-                    //                                             thumbnail: photo.images?.thumbnail?.url,
-                    //                                             small: photo.images?.small?.url,
-                    //                                             medium: photo.images?.medium?.url,
-                    //                                             large: photo.images?.large?.url,
-                    //                                             original: photo.images?.original?.url,
-                    //                                             caption: photo.caption,
-                    //                                         }))
-                    //                                         .filter((photo: any) => photo.medium) || [];
-                    //                             }
-                    //                         } catch (error) {
-                    //                             console.log(`Photo fetch failed for "${place.name}":`, error);
-                    //                         }
-                    //
-                    //                         // Get timezone for the location
-                    //                         const tzResponse = await fetch(
-                    //                             `https://maps.googleapis.com/maps/api/timezone/json?location=${details.latitude
-                    //                             },${details.longitude}&timestamp=${Math.floor(Date.now() / 1000)}&key=${serverEnv.GOOGLE_MAPS_API_KEY
-                    //                             }`,
-                    //                         );
-                    //                         const tzData = await tzResponse.json();
-                    //                         const timezone = tzData.timeZoneId || 'UTC';
-                    //
-                    //                         // Process hours and status with timezone
-                    //                         const localTime = new Date(
-                    //                             new Date().toLocaleString('en-US', {
-                    //                                 timeZone: timezone,
-                    //                             }),
-                    //                         );
-                    //                         const currentDay = localTime.getDay();
-                    //                         const currentHour = localTime.getHours();
-                    //                         const currentMinute = localTime.getMinutes();
-                    //                         const currentTime = currentHour * 100 + currentMinute;
-                    //
-                    //                         let is_closed = true;
-                    //                         let next_open_close = null;
-                    //                         let next_day = currentDay;
-                    //
-                    //                         if (details.hours?.periods) {
-                    //                             // Sort periods by day and time for proper handling of overnight hours
-                    //                             const sortedPeriods = [...details.hours.periods].sort((a, b) => {
-                    //                                 if (a.open.day !== b.open.day) return a.open.day - b.open.day;
-                    //                                 return parseInt(a.open.time) - parseInt(b.open.time);
-                    //                             });
-                    //
-                    //                             // Find current or next opening period
-                    //                             for (let i = 0; i < sortedPeriods.length; i++) {
-                    //                                 const period = sortedPeriods[i];
-                    //                                 const openTime = parseInt(period.open.time);
-                    //                                 const closeTime = period.close ? parseInt(period.close.time) : 2359;
-                    //                                 const periodDay = period.open.day;
-                    //
-                    //                                 // Handle overnight hours
-                    //                                 if (closeTime < openTime) {
-                    //                                     // Place is open from previous day
-                    //                                     if (currentDay === periodDay && currentTime < closeTime) {
-                    //                                         is_closed = false;
-                    //                                         next_open_close = period.close.time;
-                    //                                         break;
-                    //                                     }
-                    //                                     // Place is open today and extends to tomorrow
-                    //                                     if (currentDay === periodDay && currentTime >= openTime) {
-                    //                                         is_closed = false;
-                    //                                         next_open_close = period.close.time;
-                    //                                         next_day = (periodDay + 1) % 7;
-                    //                                         break;
-                    //                                     }
-                    //                                 } else {
-                    //                                     // Normal hours within same day
-                    //                                     if (
-                    //                                         currentDay === periodDay &&
-                    //                                         currentTime >= openTime &&
-                    //                                         currentTime < closeTime
-                    //                                     ) {
-                    //                                         is_closed = false;
-                    //                                         next_open_close = period.close.time;
-                    //                                         break;
-                    //                                     }
-                    //                                 }
-                    //
-                    //                                 // Find next opening time if currently closed
-                    //                                 if (is_closed) {
-                    //                                     if (
-                    //                                         periodDay > currentDay ||
-                    //                                         (periodDay === currentDay && openTime > currentTime)
-                    //                                     ) {
-                    //                                         next_open_close = period.open.time;
-                    //                                         next_day = periodDay;
-                    //                                         break;
-                    //                                     }
-                    //                                 }
-                    //                             }
-                    //                         }
-                    //
-                    //                         // Return processed place data
-                    //                         return {
-                    //                             name: place.name || 'Unnamed Place',
-                    //                             location: {
-                    //                                 lat: parseFloat(details.latitude || place.latitude || finalLat),
-                    //                                 lng: parseFloat(details.longitude || place.longitude || finalLng),
-                    //                             },
-                    //                             timezone,
-                    //                             place_id: place.location_id,
-                    //                             vicinity: place.address_obj?.address_string || '',
-                    //                             distance: parseFloat(place.distance || '0'),
-                    //                             bearing: place.bearing || '',
-                    //                             type: type,
-                    //                             rating: parseFloat(details.rating || '0'),
-                    //                             price_level: details.price_level || '',
-                    //                             cuisine: details.cuisine?.[0]?.name || '',
-                    //                             description: details.description || '',
-                    //                             phone: details.phone || '',
-                    //                             website: details.website || '',
-                    //                             reviews_count: parseInt(details.num_reviews || '0'),
-                    //                             is_closed,
-                    //                             hours: details.hours?.weekday_text || [],
-                    //                             next_open_close,
-                    //                             next_day,
-                    //                             periods: details.hours?.periods || [],
-                    //                             photos,
-                    //                             source: details.source?.name || 'TripAdvisor',
-                    //                         };
-                    //                     } catch (error) {
-                    //                         console.log(`Failed to process place "${place.name}":`, error);
-                    //                         return null;
-                    //                     }
-                    //                 }),
-                    //             );
-                    //
-                    //             // Filter and sort results
-                    //             const validPlaces = detailedPlaces
-                    //                 .filter((place) => place !== null)
-                    //                 .sort((a, b) => (a?.distance || 0) - (b?.distance || 0));
-                    //
-                    //             return {
-                    //                 results: validPlaces,
-                    //                 center: { lat: finalLat, lng: finalLng },
-                    //             };
-                    //         } catch (error) {
-                    //             console.error('Nearby search error:', error);
-                    //             throw error;
-                    //         }
-                    //     },
-                    // }),
+                    nearby_search: tool({
+                        description: 'Search for nearby places, such as restaurants or hotels based on the details given.',
+                        parameters: z.object({
+                            location: z.string().describe('The location name given by user.'),
+                            latitude: z.number().describe('The latitude of the location.'),
+                            longitude: z.number().describe('The longitude of the location.'),
+                            type: z
+                                .string()
+                                .describe('The type of place to search for (restaurants, hotels, attractions, geos).'),
+                            radius: z.number().default(6000).describe('The radius in meters (max 50000, default 6000).'),
+                        }),
+                        execute: async ({
+                            location,
+                            latitude,
+                            longitude,
+                            type,
+                            radius,
+                        }: {
+                            latitude: number;
+                            longitude: number;
+                            location: string;
+                            type: string;
+                            radius: number;
+                        }) => {
+                            const apiKey = serverEnv.TRIPADVISOR_API_KEY;
+                            let finalLat = latitude;
+                            let finalLng = longitude;
+
+                            try {
+                                // Try geocoding first
+                                const geocodingData = await fetch(
+                                    `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+                                        location,
+                                    )}&key=${serverEnv.GOOGLE_MAPS_API_KEY}`,
+                                );
+
+                                const geocoding = await geocodingData.json();
+
+                                if (geocoding.results?.[0]?.geometry?.location) {
+                                    let trimmedLat = geocoding.results[0].geometry.location.lat.toString().split('.');
+                                    finalLat = parseFloat(trimmedLat[0] + '.' + trimmedLat[1].slice(0, 6));
+                                    let trimmedLng = geocoding.results[0].geometry.location.lng.toString().split('.');
+                                    finalLng = parseFloat(trimmedLng[0] + '.' + trimmedLng[1].slice(0, 6));
+                                    console.log('Using geocoded coordinates:', finalLat, finalLng);
+                                } else {
+                                    console.log('Using provided coordinates:', finalLat, finalLng);
+                                }
+
+                                // Get nearby places
+                                const nearbyResponse = await fetch(
+                                    `https://api.content.tripadvisor.com/api/v1/location/nearby_search?latLong=${finalLat},${finalLng}&category=${type}&radius=${radius}&language=en&key=${apiKey}`,
+                                    {
+                                        method: 'GET',
+                                        headers: {
+                                            Accept: 'application/json',
+                                            origin: 'https://mplx.local',
+                                            referer: 'https://mplx.local',
+                                        },
+                                    },
+                                );
+
+                                if (!nearbyResponse.ok) {
+                                    throw new Error(`Nearby search failed: ${nearbyResponse.status}`);
+                                }
+
+                                const nearbyData = await nearbyResponse.json();
+
+                                if (!nearbyData.data || nearbyData.data.length === 0) {
+                                    console.log('No nearby places found');
+                                    return {
+                                        results: [],
+                                        center: { lat: finalLat, lng: finalLng },
+                                    };
+                                }
+
+                                // Process each place
+                                const detailedPlaces = await Promise.all(
+                                    nearbyData.data.map(async (place: any) => {
+                                        try {
+                                            if (!place.location_id) {
+                                                console.log(`Skipping place "${place.name}": No location_id`);
+                                                return null;
+                                            }
+
+                                            // Fetch place details
+                                            const detailsResponse = await fetch(
+                                                `https://api.content.tripadvisor.com/api/v1/location/${place.location_id}/details?language=en&currency=USD&key=${apiKey}`,
+                                                {
+                                                    method: 'GET',
+                                                    headers: {
+                                                        Accept: 'application/json',
+                                                        origin: 'https://mplx.local',
+                                                        referer: 'https://mplx.local',
+                                                    },
+                                                },
+                                            );
+
+                                            if (!detailsResponse.ok) {
+                                                console.log(`Failed to fetch details for "${place.name}"`);
+                                                return null;
+                                            }
+
+                                            const details = await detailsResponse.json();
+
+                                            console.log(`Place details for "${place.name}":`, details);
+
+                                            // Fetch place photos
+                                            let photos = [];
+                                            try {
+                                                const photosResponse = await fetch(
+                                                    `https://api.content.tripadvisor.com/api/v1/location/${place.location_id}/photos?language=en&key=${apiKey}`,
+                                                    {
+                                                        method: 'GET',
+                                                        headers: {
+                                                            Accept: 'application/json',
+                                                            origin: 'https://mplx.local',
+                                                            referer: 'https://mplx.local',
+                                                        },
+                                                    },
+                                                );
+
+                                                if (photosResponse.ok) {
+                                                    const photosData = await photosResponse.json();
+                                                    photos =
+                                                        photosData.data
+                                                            ?.map((photo: any) => ({
+                                                                thumbnail: photo.images?.thumbnail?.url,
+                                                                small: photo.images?.small?.url,
+                                                                medium: photo.images?.medium?.url,
+                                                                large: photo.images?.large?.url,
+                                                                original: photo.images?.original?.url,
+                                                                caption: photo.caption,
+                                                            }))
+                                                            .filter((photo: any) => photo.medium) || [];
+                                                }
+                                            } catch (error) {
+                                                console.log(`Photo fetch failed for "${place.name}":`, error);
+                                            }
+
+                                            // Get timezone for the location
+                                            const tzResponse = await fetch(
+                                                `https://maps.googleapis.com/maps/api/timezone/json?location=${details.latitude
+                                                },${details.longitude}&timestamp=${Math.floor(Date.now() / 1000)}&key=${serverEnv.GOOGLE_MAPS_API_KEY
+                                                }`,
+                                            );
+                                            const tzData = await tzResponse.json();
+                                            const timezone = tzData.timeZoneId || 'UTC';
+
+                                            // Process hours and status with timezone
+                                            const localTime = new Date(
+                                                new Date().toLocaleString('en-US', {
+                                                    timeZone: timezone,
+                                                }),
+                                            );
+                                            const currentDay = localTime.getDay();
+                                            const currentHour = localTime.getHours();
+                                            const currentMinute = localTime.getMinutes();
+                                            const currentTime = currentHour * 100 + currentMinute;
+
+                                            let is_closed = true;
+                                            let next_open_close = null;
+                                            let next_day = currentDay;
+
+                                            if (details.hours?.periods) {
+                                                // Sort periods by day and time for proper handling of overnight hours
+                                                const sortedPeriods = [...details.hours.periods].sort((a, b) => {
+                                                    if (a.open.day !== b.open.day) return a.open.day - b.open.day;
+                                                    return parseInt(a.open.time) - parseInt(b.open.time);
+                                                });
+
+                                                // Find current or next opening period
+                                                for (let i = 0; i < sortedPeriods.length; i++) {
+                                                    const period = sortedPeriods[i];
+                                                    const openTime = parseInt(period.open.time);
+                                                    const closeTime = period.close ? parseInt(period.close.time) : 2359;
+                                                    const periodDay = period.open.day;
+
+                                                    // Handle overnight hours
+                                                    if (closeTime < openTime) {
+                                                        // Place is open from previous day
+                                                        if (currentDay === periodDay && currentTime < closeTime) {
+                                                            is_closed = false;
+                                                            next_open_close = period.close.time;
+                                                            break;
+                                                        }
+                                                        // Place is open today and extends to tomorrow
+                                                        if (currentDay === periodDay && currentTime >= openTime) {
+                                                            is_closed = false;
+                                                            next_open_close = period.close.time;
+                                                            next_day = (periodDay + 1) % 7;
+                                                            break;
+                                                        }
+                                                    } else {
+                                                        // Normal hours within same day
+                                                        if (
+                                                            currentDay === periodDay &&
+                                                            currentTime >= openTime &&
+                                                            currentTime < closeTime
+                                                        ) {
+                                                            is_closed = false;
+                                                            next_open_close = period.close.time;
+                                                            break;
+                                                        }
+                                                    }
+
+                                                    // Find next opening time if currently closed
+                                                    if (is_closed) {
+                                                        if (
+                                                            periodDay > currentDay ||
+                                                            (periodDay === currentDay && openTime > currentTime)
+                                                        ) {
+                                                            next_open_close = period.open.time;
+                                                            next_day = periodDay;
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+                                            // Return processed place data
+                                            return {
+                                                name: place.name || 'Unnamed Place',
+                                                location: {
+                                                    lat: parseFloat(details.latitude || place.latitude || finalLat),
+                                                    lng: parseFloat(details.longitude || place.longitude || finalLng),
+                                                },
+                                                timezone,
+                                                place_id: place.location_id,
+                                                vicinity: place.address_obj?.address_string || '',
+                                                distance: parseFloat(place.distance || '0'),
+                                                bearing: place.bearing || '',
+                                                type: type,
+                                                rating: parseFloat(details.rating || '0'),
+                                                price_level: details.price_level || '',
+                                                cuisine: details.cuisine?.[0]?.name || '',
+                                                description: details.description || '',
+                                                phone: details.phone || '',
+                                                website: details.website || '',
+                                                reviews_count: parseInt(details.num_reviews || '0'),
+                                                is_closed,
+                                                hours: details.hours?.weekday_text || [],
+                                                next_open_close,
+                                                next_day,
+                                                periods: details.hours?.periods || [],
+                                                photos,
+                                                source: details.source?.name || 'TripAdvisor',
+                                            };
+                                        } catch (error) {
+                                            console.log(`Failed to process place "${place.name}":`, error);
+                                            return null;
+                                        }
+                                    }),
+                                );
+
+                                // Filter and sort results
+                                const validPlaces = detailedPlaces
+                                    .filter((place) => place !== null)
+                                    .sort((a, b) => (a?.distance || 0) - (b?.distance || 0));
+
+                                return {
+                                    results: validPlaces,
+                                    center: { lat: finalLat, lng: finalLng },
+                                };
+                            } catch (error) {
+                                console.error('Nearby search error:', error);
+                                throw error;
+                            }
+                        },
+                    }),
                     track_flight: tool({
                         description: 'Track flight information and status',
                         parameters: z.object({
@@ -1366,10 +1373,8 @@ export async function POST(req: Request) {
                     }),
                     datetime: tool({
                         description: 'Get the current date and time in the user\'s timezone',
-                        parameters: z.object({
-                            // timezone: z.string().optional().describe('The user\'s timezone. If not provided, will use geolocation.')
-                        }),
-                        execute: async ({  }: { }) => {
+                        parameters: z.object({}),
+                        execute: async () => {
                             try {
                                 // Get current date and time
                                 const now = new Date();
@@ -1493,6 +1498,10 @@ export async function POST(req: Request) {
                                         - 2-8 key analyses to perform
                                         - Prioritize the most important aspects to investigate
                                         
+                                        Do not use floating numbers, use whole numbers only in the priority field!!
+                                        Do not keep the numbers too low or high, make them reasonable in between.
+                                        Do not use 0 or 1 in the priority field, use numbers between 2 and 4.
+
                                         Consider different angles and potential controversies, but maintain focus on the core aspects.
                                         Ensure the total number of steps (searches + analyses) does not exceed 20.`
                             });
@@ -1728,6 +1737,7 @@ export async function POST(req: Request) {
                                         - Potential biases or conflicts
                                         - Severity should be between 2 and 10
                                         - Knowledge gaps should be between 2 and 10
+                                        - Do not keep the numbers too low or high, make them reasonable in between
                                         
                                         Research results: ${JSON.stringify(searchResults)}
                                         Analysis findings: ${JSON.stringify(stepIds.analysisSteps.map(step => ({
@@ -1934,6 +1944,7 @@ export async function POST(req: Request) {
                                     }),
                                     prompt: `Synthesize all research findings, including gap analysis and follow-up research.
                                             Highlight key conclusions and remaining uncertainties.
+                                            Stick to the types of the schema, do not add any other fields or types.
                                             
                                             Original results: ${JSON.stringify(searchResults)}
                                             Gap analysis: ${JSON.stringify(gapAnalysis)}
@@ -1993,6 +2004,45 @@ export async function POST(req: Request) {
                             };
                         },
                     }),
+                },
+                experimental_repairToolCall: async ({
+                    toolCall,
+                    tools,
+                    parameterSchema,
+                    error,
+                }) => {
+                    if (NoSuchToolError.isInstance(error)) {
+                        return null; // do not attempt to fix invalid tool names
+                    }
+
+                    console.log("Fixing tool call================================");
+                    console.log("toolCall", toolCall);
+                    console.log("tools", tools);
+                    console.log("parameterSchema", parameterSchema);
+                    console.log("error", error);
+
+                    const tool = tools[toolCall.toolName as keyof typeof tools];
+
+                    const { object: repairedArgs } = await generateObject({
+                        model: scira.languageModel("scira-default"),
+                        schema: tool.parameters,
+                        prompt: [
+                            `The model tried to call the tool "${toolCall.toolName}"` +
+                            ` with the following arguments:`,
+                            JSON.stringify(toolCall.args),
+                            `The tool accepts the following schema:`,
+                            JSON.stringify(parameterSchema(toolCall)),
+                            'Please fix the arguments.',
+                            'Do not use print statements stock chart tool.',
+                            `For the stock chart tool you have to generate a python code with matplotlib and yfinance to plot the stock chart.`,
+                            `For the web search make multiple queries to get the best results.`,
+                            `Today's date is ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`
+                        ].join('\n'),
+                    });
+
+                    console.log("repairedArgs", repairedArgs);
+
+                    return { ...toolCall, args: JSON.stringify(repairedArgs) };
                 },
                 onChunk(event) {
                     if (event.chunk.type === 'tool-call') {

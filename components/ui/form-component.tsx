@@ -40,10 +40,10 @@ const XAIIcon = ({ className }: { className?: string }) => (
         xmlns="http://www.w3.org/2000/svg"
         className={className}
     >
-        <path d="M356.09 155.99L364.4 482.36H430.96L439.28 37.18L356.09 155.99Z" fill="currentColor"/>
-        <path d="M439.28 0.910004H337.72L178.35 228.53L229.13 301.05L439.28 0.910004Z" fill="currentColor"/>
-        <path d="M0.609985 482.36H102.17L152.96 409.84L102.17 337.31L0.609985 482.36Z" fill="currentColor"/>
-        <path d="M0.609985 155.99L229.13 482.36H330.69L102.17 155.99H0.609985Z" fill="currentColor"/>
+        <path d="M356.09 155.99L364.4 482.36H430.96L439.28 37.18L356.09 155.99Z" fill="currentColor" />
+        <path d="M439.28 0.910004H337.72L178.35 228.53L229.13 301.05L439.28 0.910004Z" fill="currentColor" />
+        <path d="M0.609985 482.36H102.17L152.96 409.84L102.17 337.31L0.609985 482.36Z" fill="currentColor" />
+        <path d="M0.609985 155.99L229.13 482.36H330.69L102.17 155.99H0.609985Z" fill="currentColor" />
     </svg>
 );
 
@@ -55,12 +55,13 @@ const AnthropicIcon = ({ className }: { className?: string }) => (
         className={className}
     >
         <title>Anthropic</title>
-        <path fill="currentColor" d="M17.3041 3.541h-3.6718l6.696 16.918H24Zm-10.6082 0L0 20.459h3.7442l1.3693-3.5527h7.0052l1.3693 3.5528h3.7442L10.5363 3.5409Zm-.3712 10.2232 2.2914-5.9456 2.2914 5.9456Z"/>
+        <path fill="currentColor" d="M17.3041 3.541h-3.6718l6.696 16.918H24Zm-10.6082 0L0 20.459h3.7442l1.3693-3.5527h7.0052l1.3693 3.5528h3.7442L10.5363 3.5409Zm-.3712 10.2232 2.2914-5.9456 2.2914 5.9456Z" />
     </svg>
 );
 
 const models = [
     { value: "scira-default", label: "GPT-4o-mini", icon: "/openai.svg", iconClass: "!text-neutral-300", description: "OpenAI's ChatGPT-4o-mini model", color: "steel", vision: true, experimental: false, category: "Stable" },
+    { value: "scira-vision", label: "Grok 2.0 Vision", icon: XAIIcon, iconClass: "!text-neutral-300", description: "xAI's Grok 2.0 Vision model", color: "steel", vision: true, experimental: false, category: "Stable" },
     { value: "scira-sonnet", label: "Claude 3.7 Sonnet", icon: AnthropicIcon, iconClass: "!text-neutral-900 dark:!text-white", description: "Anthropic's G.O.A.T. model", color: "purple", vision: true, experimental: false, category: "Stable" },
     { value: "scira-llama", label: "Llama 3.3 70B", icon: "/cerebras.png", iconClass: "!text-neutral-900 dark:!text-white", description: "Meta's Llama model by Cerebras", color: "offgray", vision: false, experimental: true, category: "Experimental" },
     { value: "scira-r1", label: "DeepSeek R1 Distilled", icon: "/groq.svg", iconClass: "!text-neutral-900 dark:!text-white", description: "DeepSeek R1 model by Groq", color: "sapphire", vision: false, experimental: true, category: "Experimental" },
@@ -636,7 +637,7 @@ const SelectionContent = ({ selectedGroup, onGroupSelect, status, onExpandChange
             animate={{
                 width: isExpanded && !isProcessing ? "auto" : "30px",
                 gap: isExpanded && !isProcessing ? "0.5rem" : 0,
-                paddingRight: isExpanded && !isProcessing ? "0.5rem" : 0,
+                paddingRight: isExpanded && !isProcessing ? "0.25rem" : 0,
             }}
             transition={{
                 duration: 0.2,
