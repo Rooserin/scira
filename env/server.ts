@@ -23,6 +23,7 @@ export const serverEnv = createEnv({
     // AVIATION_STACK_API_KEY: z.string().min(1),
     CRON_SECRET: z.string().min(1),
     BLOB_READ_WRITE_TOKEN: z.string().min(1),
+    GOOGLE_SEARCH_API_KEY: z.string().min(1),
   },
   experimental__runtimeEnv: process.env,
 })
