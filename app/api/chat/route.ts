@@ -376,8 +376,8 @@ export async function POST(req: Request) {
                             searchDepth: ('basic' | 'advanced')[];
                             exclude_domains?: string[];
                         }) => {
-                            const apiKey = serverEnv.TAVILY_API_KEY;
-                            const tvly = tavily({ apiKey });
+                            const tvlyKey = serverEnv.TAVILY_API_KEY;
+                            const tvly = tavily({ tvlyKey });
                             const includeImageDescriptions = true;
 
                             console.log('Queries:', queries);
@@ -1449,8 +1449,8 @@ export async function POST(req: Request) {
                             depth: z.enum(['basic', 'advanced']).describe('Search depth level').default('basic'),
                         }),
                         execute: async ({ topic, depth }: { topic: string; depth: 'basic' | 'advanced' }) => {
-                            const apiKey = serverEnv.TAVILY_API_KEY;
-                            const tvly = tavily({ apiKey });
+                            const tvlyKey = serverEnv.TAVILY_API_KEY;
+                            const tvly = tavily({ tvlyKey });
                             const exa = new Exa(serverEnv.EXA_API_KEY as string);
 
                             // Send initial plan status update (without steps count and extra details)

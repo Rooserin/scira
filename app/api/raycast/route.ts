@@ -1,5 +1,4 @@
 import { serverEnv } from '@/env/server';
-import { xai } from '@ai-sdk/xai';
 import { tavily } from '@tavily/core';
 import {
     convertToCoreMessages,
@@ -9,10 +8,17 @@ import {
 } from 'ai';
 import Exa from 'exa-js';
 import { z } from 'zod';
+import { createFixedProxyFetch } from '@/lib/utils/proxy-fetch';
+import { createOpenAI } from '@ai-sdk/openai';
+
+// 强化fetch实现
+const customFetch = createFixedProxyFetch({ timeout: 15000 });
+
+const openai = createOpenAI({ apiKey: process.env.OPENAI_API_KEY, fetch: customFetch });
 
 const scira = customProvider({
     languageModels: {
-        'scira-default': xai('grok-2-1212'),
+        'scira-default': openai('gpt-4o'),
     }
 })
 
