@@ -1395,7 +1395,7 @@ const HomeContent = () => {
                             <div className="flex items-center gap-2">
                                 <Sparkles className="size-5 text-primary" />
                                 <h2 className="text-base font-semibold text-neutral-800 dark:text-neutral-200">
-                                    Answer
+                                    回答
                                 </h2>
                             </div>
                             {status === 'ready' && (
@@ -1724,8 +1724,11 @@ const HomeContent = () => {
                     {status === 'ready' && messages.length === 0 && (
                         <div className="text-center !font-sans">
                             <h1 className="text-2xl sm:text-4xl mb-6 text-neutral-800 dark:text-neutral-100 font-syne">
-                                What do you want to explore?
+                                你想知道些什么?
                             </h1>
+                            <h3 className="text-2m sm:text-l mb-6 text-neutral-800 dark:text-neutral-100 font-syne">
+                                我可以结合大模型帮您搜索新闻、网页、文献
+                            </h3>
                         </div>
                     )}
                     <AnimatePresence>
@@ -2206,7 +2209,7 @@ const ToolInvocationListView = memo(
                             </CardHeader>
                             <div className="relative">
                                 <div className="px-4 pb-2 h-72">
-                                    <div className="flex flex-nowrap overflow-x-auto gap-4 no-scrollbar">
+                                    <div className="flex flex-nowrap overflow-x-auto gap-4 custom-scrollbar">
                                         {result.slice(0, PREVIEW_COUNT).map((post: XResult, index: number) => (
                                             <motion.div
                                                 key={post.tweetId}
@@ -2372,13 +2375,14 @@ const ToolInvocationListView = memo(
                                         <Book className="h-4 w-4 text-violet-600 dark:text-violet-400" />
                                     </div>
                                     <div>
-                                        <CardTitle>Academic Papers</CardTitle>
-                                        <p className="text-sm text-muted-foreground">Found {result.results.length} papers</p>
+                                        <CardTitle>学术文献</CardTitle>
+                                        <CardTitle>关键词: {args.query}</CardTitle>
+                                        <p className="text-sm text-muted-foreground">找到 {result.results.length} 篇相关文献</p>
                                     </div>
                                 </div>
                             </CardHeader>
                             <div className="px-4 pb-2">
-                                <div className="flex overflow-x-auto gap-4 no-scrollbar hover:overflow-x-scroll">
+                                <div className="flex overflow-x-auto gap-4 custom-scrollbar hover:overflow-x-scroll">
                                     {result.results.map((paper: AcademicResult, index: number) => (
                                         <motion.div
                                             key={paper.url || index}
@@ -2641,7 +2645,7 @@ const ToolInvocationListView = memo(
                     return <ReasonSearch updates={updates || []} />;
                 }
 
-                if (toolInvocation.toolName === 'web_search') {
+                if (toolInvocation.toolName === 'tvly_search') {
                     return (
                         <div className="mt-4">
                             <MultiSearch

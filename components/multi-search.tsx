@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
+import { useDraggableScroll } from '@/lib/utils/useDraggableScroll';
 
 type SearchImage = {
     url: string;
@@ -64,10 +65,10 @@ const PREVIEW_IMAGE_COUNT = {
 };
 
 // Loading state component
-const SearchLoadingState = ({ 
+const SearchLoadingState = ({
     queries,
-    annotations 
-}: { 
+    annotations
+}: {
     queries: string[];
     annotations: QueryCompletion[];
 }) => {
@@ -107,7 +108,7 @@ const SearchLoadingState = ({
                     <AccordionContent className="mt-0 pt-0 border-0">
                         <div className="py-3 px-4 bg-white dark:bg-neutral-900 rounded-b-xl border-t-0 border border-neutral-200 dark:border-neutral-800 shadow-sm">
                             {/* Query badges */}
-                            <div className="flex overflow-x-auto gap-2 mb-3 no-scrollbar pb-1">
+                            <div className="flex overflow-x-auto gap-2 mb-3 custom-scrollbar pb-1">
                                 {queries.map((query, i) => {
                                     const annotation = annotations.find(a => a.data.query === query);
                                     return (
@@ -116,8 +117,8 @@ const SearchLoadingState = ({
                                             variant="secondary"
                                             className={cn(
                                                 "px-3 py-1.5 rounded-full flex-shrink-0 flex items-center gap-1.5",
-                                                annotation 
-                                                    ? "bg-neutral-100 dark:bg-neutral-800" 
+                                                annotation
+                                                    ? "bg-neutral-100 dark:bg-neutral-800"
                                                     : "bg-neutral-50 dark:bg-neutral-900 text-neutral-400"
                                             )}
                                         >
@@ -133,9 +134,9 @@ const SearchLoadingState = ({
                             </div>
 
                             {/* Horizontal scrolling results skeleton */}
-                            <div className="flex overflow-x-auto gap-3 no-scrollbar pb-1">
+                            <div className="flex overflow-x-auto gap-3 custom-scrollbar pb-1">
                                 {[...Array(6)].map((_, i) => (
-                                    <div 
+                                    <div
                                         key={i}
                                         className="w-[300px] flex-shrink-0 bg-background rounded-xl border border-border shadow-sm"
                                     >
@@ -243,8 +244,8 @@ const ImageGrid = ({ images, showAll = false }: ImageGridProps) => {
     const [selectedImage, setSelectedImage] = React.useState(0);
     const isDesktop = useMediaQuery("(min-width: 768px)");
 
-    const displayImages = showAll 
-        ? images 
+    const displayImages = showAll
+        ? images
         : images.slice(0, isDesktop ? PREVIEW_IMAGE_COUNT.DESKTOP : PREVIEW_IMAGE_COUNT.MOBILE);
     const hasMore = images.length > (isDesktop ? PREVIEW_IMAGE_COUNT.DESKTOP : PREVIEW_IMAGE_COUNT.MOBILE);
 
@@ -318,7 +319,7 @@ const ImageGrid = ({ images, showAll = false }: ImageGridProps) => {
                 <Dialog open={isOpen} onOpenChange={setIsOpen}>
                     <DialogContent className="max-w-5xl h-[80vh] p-0">
                         <div className="relative bg-background w-full h-full rounded-lg overflow-hidden">
-                            <motion.div 
+                            <motion.div
                                 className="absolute top-0 inset-x-0 p-4 bg-gradient-to-b from-black/40 to-transparent z-50"
                                 initial={{ opacity: 0, y: -20 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -381,7 +382,7 @@ const ImageGrid = ({ images, showAll = false }: ImageGridProps) => {
                             </Button>
 
                             {images[selectedImage].description && (
-                                <motion.div 
+                                <motion.div
                                     className="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-black/40 dark:from-black/60 via-black/20 dark:via-black/40 to-transparent"
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
@@ -398,7 +399,7 @@ const ImageGrid = ({ images, showAll = false }: ImageGridProps) => {
                 <Drawer open={isOpen} onOpenChange={setIsOpen}>
                     <DrawerContent className="p-0 h-[80vh] bg-background">
                         <div className="relative w-full h-full rounded-t-lg overflow-hidden">
-                            <motion.div 
+                            <motion.div
                                 className="absolute top-0 inset-x-0 p-4 bg-gradient-to-b from-black/40 to-transparent z-50"
                                 initial={{ opacity: 0, y: -20 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -461,7 +462,7 @@ const ImageGrid = ({ images, showAll = false }: ImageGridProps) => {
                             </Button>
 
                             {images[selectedImage].description && (
-                                <motion.div 
+                                <motion.div
                                     className="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-black/40 dark:from-black/60 via-black/20 dark:via-black/40 to-transparent"
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
@@ -479,8 +480,8 @@ const ImageGrid = ({ images, showAll = false }: ImageGridProps) => {
     );
 };
 
-const MultiSearch: React.FC<{ 
-    result: MultiSearchResponse | null; 
+const MultiSearch: React.FC<{
+    result: MultiSearchResponse | null;
     args: MultiSearchArgs;
     annotations?: QueryCompletion[];
 }> = ({
@@ -498,6 +499,7 @@ const MultiSearch: React.FC<{
     }, []);
 
     const totalResults = result.searches.reduce((sum, search) => sum + search.results.length, 0);
+    const draggableProps = useDraggableScroll();
 
     return (
         <div className="w-full space-y-4">
@@ -514,7 +516,7 @@ const MultiSearch: React.FC<{
                                 <div className="p-2 rounded-lg bg-neutral-100 dark:bg-neutral-800">
                                     <Globe className="h-4 w-4 text-neutral-500" />
                                 </div>
-                                <h2 className="font-medium text-left">Sources Found</h2>
+                                <h2 className="font-medium text-left">搜索来源</h2>
                             </div>
                             <div className="flex items-center gap-2 mr-2">
                                 <Badge
@@ -522,7 +524,7 @@ const MultiSearch: React.FC<{
                                     className="rounded-full px-3 py-1 bg-neutral-100 dark:bg-neutral-800"
                                 >
                                     <Search className="h-3 w-3 mr-1.5" />
-                                    {totalResults} Results
+                                    找到 {totalResults} 个结果
                                 </Badge>
                             </div>
                         </div>
@@ -531,7 +533,10 @@ const MultiSearch: React.FC<{
                     <AccordionContent className="mt-0 pt-0 border-0">
                         <div className="py-3 px-4 bg-white dark:bg-neutral-900 rounded-b-xl border-t-0 border border-neutral-200 dark:border-neutral-800 shadow-sm">
                             {/* Query badges */}
-                            <div className="flex overflow-x-auto gap-2 mb-3 no-scrollbar pb-1">
+                            <div
+                                className="flex overflow-x-auto gap-2 mb-3 custom-scrollbar pb-1"
+                                // {...draggableProps}
+                            >
                                 {result.searches.map((search, i) => (
                                     <Badge
                                         key={i}
@@ -545,7 +550,10 @@ const MultiSearch: React.FC<{
                             </div>
 
                             {/* Horizontal scrolling results */}
-                            <div className="flex overflow-x-auto gap-3 no-scrollbar">
+                            <div
+                                className="flex overflow-x-auto gap-3 custom-scrollbar"
+                                // {...draggableProps}
+                            >
                                 {result.searches.map(search =>
                                     search.results.map((result, resultIndex) => (
                                         <motion.div

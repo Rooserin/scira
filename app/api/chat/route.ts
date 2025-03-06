@@ -27,7 +27,7 @@ import { z } from 'zod';
 import { geolocation } from '@vercel/functions';
 
 // 强化fetch实现
-const customFetch = createFixedProxyFetch({ timeout: 15000 });
+const customFetch = createFixedProxyFetch({ timeout: 30000 });
 
 const openai = createOpenAI({ apiKey: process.env.OPENAI_API_KEY, fetch: customFetch });
 // const xai = createXai({ apiKey: process.env.XAI_API_KEY, fetch: customFetch });
@@ -187,6 +187,7 @@ export async function POST(req: Request) {
     const { tools: activeTools, systemPrompt } = await getGroupConfig(group);
     const geo = geolocation(req);
 
+    console.log("Request param: ", req.json())
     console.log("Running with model: ", model.trim());
 
     return createDataStreamResponse({
@@ -348,7 +349,59 @@ export async function POST(req: Request) {
                             };
                         },
                     }),
-                    web_search: tool({
+                    // exa_search: tool({
+                    //     description: 'Search the web for information with multiple queries, max results and search depth.',
+                    //     parameters: z.object({
+                    //         query: z.string().describe('The search query'),
+                    //     }),
+                    //     execute: async ({ query }: { query: string }) => {
+                    //         try {
+                    //             const exa = new Exa(serverEnv.EXA_API_KEY as string);
+                    //
+                    //             // Search academic papers with content summary
+                    //             console.log("Exa query:" + query)
+                    //             const result = await exa.searchAndContents(query, {
+                    //                 type: 'auto',
+                    //                 numResults: 20,
+                    //                 category: 'research paper',
+                    //                 summary: {
+                    //                     query: 'Abstract of the Paper',
+                    //                 },
+                    //             });
+                    //
+                    //             // Process and clean results
+                    //             const processedResults = result.results.reduce<typeof result.results>((acc, paper) => {
+                    //                 // Skip if URL already exists or if no summary available
+                    //                 if (acc.some((p) => p.url === paper.url) || !paper.summary) return acc;
+                    //
+                    //                 // Clean up summary (remove "Summary:" prefix if exists)
+                    //                 const cleanSummary = paper.summary.replace(/^Summary:\s*/i, '');
+                    //
+                    //                 // Clean up title (remove [...] suffixes)
+                    //                 const cleanTitle = paper.title?.replace(/\s\[.*?\]$/, '');
+                    //
+                    //                 acc.push({
+                    //                     ...paper,
+                    //                     title: cleanTitle || '',
+                    //                     summary: cleanSummary,
+                    //                 });
+                    //
+                    //                 return acc;
+                    //             }, []);
+                    //
+                    //             // Take only the first 10 unique, valid results
+                    //             const limitedResults = processedResults.slice(0, 10);
+                    //
+                    //             return {
+                    //                 results: limitedResults,
+                    //             };
+                    //         } catch (error) {
+                    //             console.error('Academic search error:', error);
+                    //             throw error;
+                    //         }
+                    //     },
+                    // }),
+                    tvly_search: tool({
                         description: 'Search the web for information with multiple queries, max results and search depth.',
                         parameters: z.object({
                             queries: z.array(z.string().describe('Array of search queries to look up on the web.')),
@@ -382,6 +435,8 @@ export async function POST(req: Request) {
                             const tvlyKey = serverEnv.TAVILY_API_KEY;
                             const tvly = tavily({ tvlyKey });
                             const includeImageDescriptions = true;
+
+                            // const exa = new Exa(process.env.EXA_API_KEY);
 
                             console.log('Queries:', queries);
                             console.log('Max Results:', maxResults);
@@ -686,6 +741,7 @@ export async function POST(req: Request) {
                                 const exa = new Exa(serverEnv.EXA_API_KEY as string);
 
                                 // Search academic papers with content summary
+                                console.log("Exa query:" + '{query}')
                                 const result = await exa.searchAndContents(query, {
                                     type: 'auto',
                                     numResults: 20,
