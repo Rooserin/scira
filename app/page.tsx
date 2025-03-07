@@ -2642,7 +2642,7 @@ const ToolInvocationListView = memo(
                     const updates = message?.annotations?.filter((a: any) =>
                         a.type === 'research_update'
                     ).map((a: any) => a.data);
-                    return <ReasonSearch updates={updates || []} />;
+                    return <ReasonSearch updates={updates || []} topic={args.topic}/>;
                 }
 
                 if (toolInvocation.toolName === 'tvly_search') {
@@ -3086,7 +3086,7 @@ const ToolInvocationListView = memo(
             <>
                 {toolInvocations.map(
                     (toolInvocation: ToolInvocation, toolIndex: number) => (
-                        <div key={`tool-${toolIndex}`}>
+                        <div key={`tool-${toolIndex}`} style={{ marginBottom: '10px' }}>
                             {renderToolInvocation(toolInvocation, toolIndex)}
                         </div>
                     )

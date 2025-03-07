@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Search, FileText, BookA, Sparkles, ArrowRight, ChevronLeft, ChevronRight, ChevronDown, Loader2 } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -64,13 +64,13 @@ export interface StreamUpdate {
     uncertainties?: string[];
 }
 
-const ResearchStep = ({ 
-    update, 
+const ResearchStep = ({
+    update,
     isExpanded,
     onToggle,
     id
-}: { 
-    update: StreamUpdate, 
+}: {
+    update: StreamUpdate,
     isExpanded: boolean,
     onToggle: () => void,
     id: string
@@ -83,13 +83,13 @@ const ResearchStep = ({
         analysis: Sparkles,
         'gap-search': Search,
     } as const;
-    
+
     const isGapSearch = update.id.startsWith('gap-search');
     const Icon = isGapSearch ? icons['gap-search'] : icons[update.type];
 
     return (
         <div id={id} className="group">
-            <motion.div 
+            <motion.div
                 className={cn(
                     "flex items-center gap-2 px-2 py-1.5 rounded-lg transition-colors duration-200",
                     isExpanded ? "bg-neutral-50 dark:bg-neutral-800/50" : "hover:bg-neutral-50 dark:hover:bg-neutral-800/50"
@@ -109,7 +109,7 @@ const ResearchStep = ({
                     )}
                 </div>
 
-                <button 
+                <button
                     onClick={onToggle}
                     className="flex items-center justify-between flex-1 text-left min-w-0"
                 >
@@ -146,16 +146,16 @@ const ResearchStep = ({
                 {isExpanded && (
                     <motion.div
                         initial={{ height: 0, opacity: 0 }}
-                        animate={{ 
-                            height: "auto", 
+                        animate={{
+                            height: "auto",
                             opacity: 1,
                             transition: {
                                 height: { duration: 0.2, ease: "easeOut" },
                                 opacity: { duration: 0.15, delay: 0.05 }
                             }
                         }}
-                        exit={{ 
-                            height: 0, 
+                        exit={{
+                            height: 0,
                             opacity: 0,
                             transition: {
                                 height: { duration: 0.2, ease: "easeIn" },
@@ -169,7 +169,7 @@ const ResearchStep = ({
                             {update.type === 'plan' && update.plan && (
                                 <div className="space-y-2">
                                     {update.plan.search_queries.map((query, idx) => (
-                                        <motion.div 
+                                        <motion.div
                                             key={idx}
                                             initial={{ opacity: 0, y: 10 }}
                                             animate={{ opacity: 1, y: 0 }}
@@ -210,7 +210,7 @@ const ResearchStep = ({
                                             className="flex items-start gap-2 p-2 rounded-lg bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
                                         >
                                             <div className="flex-shrink-0 mt-1">
-                                                <img 
+                                                <img
                                                     src={`https://www.google.com/s2/favicons?domain=${new URL(result.url).hostname}&sz=128`}
                                                     alt=""
                                                     className="w-4 h-4"
@@ -221,8 +221,8 @@ const ResearchStep = ({
                                                     }}
                                                 />
                                                 <div className="hidden">
-                                                    {update.type === 'web' ? 
-                                                        <FileText className="h-4 w-4 text-neutral-500" /> : 
+                                                    {update.type === 'web' ?
+                                                        <FileText className="h-4 w-4 text-neutral-500" /> :
                                                         <BookA className="h-4 w-4 text-neutral-500" />
                                                     }
                                                 </div>
@@ -254,8 +254,8 @@ const ResearchStep = ({
                                                 <div className="flex-shrink-0 mt-1.5">
                                                     <div className={cn(
                                                         "w-1.5 h-1.5 rounded-full",
-                                                        finding.confidence > 0.7 
-                                                            ? "bg-neutral-900 dark:bg-neutral-50" 
+                                                        finding.confidence > 0.7
+                                                            ? "bg-neutral-900 dark:bg-neutral-50"
                                                             : "bg-neutral-400 dark:bg-neutral-600"
                                                     )} />
                                                 </div>
@@ -320,7 +320,7 @@ const StepCarousel = ({ updates }: { updates: StreamUpdate[] }) => {
                 const isExpanded = update.status === 'running' || expandedSteps.has(update.id);
 
                 return (
-                    <ResearchStep 
+                    <ResearchStep
                         key={update.id}
                         id={`step-${update.id}`}
                         update={update}
@@ -346,7 +346,7 @@ const SourcesList = ({ sources, type }: { sources: StreamUpdate['results'], type
                 >
                     <div className="flex items-start gap-3">
                         <div className="flex-shrink-0 mt-1">
-                            <img 
+                            <img
                                 src={`https://www.google.com/s2/favicons?domain=${new URL(source.url).hostname}&sz=128`}
                                 alt=""
                                 className="w-4 h-4"
@@ -375,12 +375,12 @@ const SourcesList = ({ sources, type }: { sources: StreamUpdate['results'], type
     );
 };
 
-const AllSourcesView = ({ 
-    sources, 
+const AllSourcesView = ({
+    sources,
     type,
-    id 
-}: { 
-    sources: StreamUpdate['results'], 
+    id
+}: {
+    sources: StreamUpdate['results'],
     type: 'web' | 'academic',
     id?: string
 }) => {
@@ -425,20 +425,20 @@ const AllSourcesView = ({
 };
 
 // First, let's create a new component for the animated tab content
-const AnimatedTabContent = ({ children, value, selected }: { 
-    children: React.ReactNode, 
-    value: string, 
-    selected: string 
+const AnimatedTabContent = ({ children, value, selected }: {
+    children: React.ReactNode,
+    value: string,
+    selected: string
 }) => (
     <motion.div
         role="tabpanel"
         initial={{ opacity: 0, x: 10 }}
-        animate={{ 
+        animate={{
             opacity: value === selected ? 1 : 0,
             x: value === selected ? 0 : 10,
             pointerEvents: value === selected ? "auto" : "none"
         }}
-        transition={{ 
+        transition={{
             duration: 0.2,
             ease: "easeOut"
         }}
@@ -459,7 +459,7 @@ const EmptyState = ({ type }: { type: 'web' | 'academic' | 'analysis' }) => {
         analysis: Sparkles
     } as const;
     const Icon = icons[type];
-    
+
     const messages = {
         web: "Web sources will appear here once found",
         academic: "Academic sources will appear here once found",
@@ -478,7 +478,10 @@ const EmptyState = ({ type }: { type: 'web' | 'academic' | 'analysis' }) => {
     );
 };
 
-const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
+const ReasonSearch = ({ updates, topic }: { 
+    updates: StreamUpdate[],
+    topic: string
+}) => {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [selectedTab, setSelectedTab] = useState("web");
 
@@ -559,10 +562,10 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
     // Deduplicate updates by id so that a "completed" state overwrites its running version.
     const dedupedUpdates = React.useMemo(() => {
         const updateMap = new Map<string, StreamUpdate>();
-        
+
         // Sort updates by timestamp to process newer updates last
         const sortedUpdates = [...updates].sort((a, b) => a.timestamp - b.timestamp);
-        
+
         sortedUpdates.forEach(u => {
             if (u.overwrite || !updateMap.has(u.id)) {
                 updateMap.set(u.id, u);
@@ -573,7 +576,7 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
                 }
             }
         });
-        
+
         return Array.from(updateMap.values());
     }, [updates]);
 
@@ -639,12 +642,18 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
             <Card className="w-full shadow-none hover:shadow-none">
                 <div
                     className={cn(
-                        "flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 rounded-xl",
+                        "px-4 sm:px-6 sm:py-4 rounded-xl",
                         isComplete && "cursor-pointer",
                         isComplete && "hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
                     )}
+                    style={{ paddingBottom: '0px' }}
                     onClick={() => isComplete && setIsCollapsed(!isCollapsed)}
                 >
+                        <div className="flex items-center gap-2">
+                            <CardTitle>
+                                {topic}
+                            </CardTitle>
+                        </div>
                     <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
                         <div className="flex items-center gap-2">
                             <h3 className="text-sm font-medium">
@@ -703,8 +712,8 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
                     </div>
                     <Tabs defaultValue="web" className="w-full" onValueChange={setSelectedTab} value={selectedTab}>
                         <TabsList className="w-full h-10 grid grid-cols-3 bg-neutral-100/50 dark:bg-neutral-800/50 p-1 rounded-lg">
-                            <TabsTrigger 
-                                value="web" 
+                            <TabsTrigger
+                                value="web"
                                 className="h-full data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-800 rounded-md"
                             >
                                 <div className="flex items-center gap-1.5">
@@ -717,8 +726,8 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
                                     )}
                                 </div>
                             </TabsTrigger>
-                            <TabsTrigger 
-                                value="academic" 
+                            <TabsTrigger
+                                value="academic"
                                 className="h-full data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-800 rounded-md"
                             >
                                 <div className="flex items-center gap-1.5">
@@ -731,8 +740,8 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
                                     )}
                                 </div>
                             </TabsTrigger>
-                            <TabsTrigger 
-                                value="analysis" 
+                            <TabsTrigger
+                                value="analysis"
                                 className="h-full data-[state=active]:bg-white dark:data-[state=active]:bg-neutral-800 rounded-md"
                             >
                                 <div className="flex items-center gap-1.5">
@@ -762,7 +771,7 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
                                                 >
                                                     <div className="flex items-start gap-2">
                                                         <div className="flex-shrink-0 mt-0.5">
-                                                            <img 
+                                                            <img
                                                                 src={`https://www.google.com/s2/favicons?domain=${new URL(source.url).hostname}&sz=128`}
                                                                 alt=""
                                                                 className="w-3.5 h-3.5"
@@ -823,7 +832,7 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
                                                 >
                                                     <div className="flex items-start gap-2">
                                                         <div className="flex-shrink-0 mt-0.5">
-                                                            <img 
+                                                            <img
                                                                 src={`https://www.google.com/s2/favicons?domain=${new URL(source.url).hostname}&sz=128`}
                                                                 alt=""
                                                                 className="w-3.5 h-3.5"
@@ -1103,4 +1112,4 @@ const ReasonSearch = ({ updates }: { updates: StreamUpdate[] }) => {
     );
 };
 
-export default ReasonSearch; 
+export default ReasonSearch;
