@@ -91,7 +91,7 @@ const SearchLoadingState = ({
                                 <div className="p-2 rounded-lg bg-neutral-100 dark:bg-neutral-800">
                                     <Globe className="h-4 w-4 text-neutral-500" />
                                 </div>
-                                <h2 className="font-medium text-left">Sources Found</h2>
+                                <h2 className="font-medium text-left">搜索来源</h2>
                             </div>
                             <div className="flex items-center gap-2 mr-2">
                                 <Badge
@@ -99,7 +99,7 @@ const SearchLoadingState = ({
                                     className="rounded-full px-3 py-1 bg-neutral-100 dark:bg-neutral-800"
                                 >
                                     <Search className="h-3 w-3 mr-1.5" />
-                                    {totalResults || '0'} Results
+                                    找到 {totalResults || '0'} 个结果
                                 </Badge>
                             </div>
                         </div>
