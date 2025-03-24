@@ -2362,7 +2362,7 @@ const ToolInvocationListView = memo(
                     if (!result) {
                         return <SearchLoadingState
                             icon={Book}
-                            text="Searching academic papers..."
+                            text="正在搜索相关文献..."
                             color="violet"
                         />;
                     }
@@ -2375,7 +2375,6 @@ const ToolInvocationListView = memo(
                                         <Book className="h-4 w-4 text-violet-600 dark:text-violet-400" />
                                     </div>
                                     <div>
-                                        <CardTitle>学术文献</CardTitle>
                                         <CardTitle>关键词: {args.query}</CardTitle>
                                         <p className="text-sm text-muted-foreground">找到 {result.results.length} 篇相关文献</p>
                                     </div>
